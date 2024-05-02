@@ -56,6 +56,18 @@ if TYPE_CHECKING:
     SudoReturn = Union[Awaitable[Tuple[str, bool]], Tuple[str, bool]]
     SudoCallback = Callable[[], SudoReturn]
 
+DEFAULT_ALLOWED_SERVICES = [
+    "klipper_mcu",
+    "webcamd",
+    "MoonCord",
+    "KlipperScreen",
+    "moonraker-telegram-bot",
+    "moonraker-obico",
+    "sonar",
+    "crowsnest",
+    "octoeverywhere",
+    "ratos-configurator"
+]
 CGROUP_PATH = "/proc/1/cgroup"
 SCHED_PATH = "/proc/1/sched"
 SYSTEMD_PATH = "/etc/systemd/system"
@@ -142,6 +154,9 @@ class Machine:
             "/machine/system_info", RequestType.GET, self._handle_sysinfo_request
         )
         self.server.register_endpoint(
+            "/machine/system_info", RequestType.POST, self._handle_sysinfo_request
+        )
+        self.server.register_endpoint(
             "/machine/sudo/info", RequestType.GET, self._handle_sudo_info
         )
         self.server.register_endpoint(
@@ -189,7 +204,7 @@ class Machine:
         default_svcs = source_info.read_asset("default_allowed_services") or ""
         try:
             if not fpath.exists():
-                fpath.write_text(default_svcs)
+                fpath.write_text("\n".join(DEFAULT_ALLOWED_SERVICES))
             data = fpath.read_text()
         except Exception:
             logging.exception("Failed to read moonraker.asvc")
@@ -357,6 +372,15 @@ class Machine:
             "moonraker": self.unit_name,
             "klipper": kconn.unit_name
         }
+        dev_name = web_request.get_str('dev_name',default=None)
+        if dev_name !=None:
+            Note=open('dev_info.txt',mode='w')
+            Note.write(dev_name)
+            Note.close()
+        with open('dev_info.txt', 'r') as f:
+            content = f.read()
+            f.close()
+        self.system_info["machine_name"] = content
         return {"system_info": sys_info}
 
     async def _set_sudo_password(
