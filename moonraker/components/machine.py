@@ -151,9 +151,6 @@ class Machine:
             "/machine/services/start", RequestType.POST, self._handle_service_request
         )
         self.server.register_endpoint(
-            "/machine/system_info", RequestType.GET, self._handle_sysinfo_request
-        )
-        self.server.register_endpoint(
             "/machine/system_info", RequestType.POST, self._handle_sysinfo_request
         )
         self.server.register_endpoint(
